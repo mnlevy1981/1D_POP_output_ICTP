@@ -52,7 +52,9 @@ begin
   u = transpose(f->UVEL(:,0:nlevs_in_plot-1,0,0))/100.d   ; Convert from cm/s -> m/s
   u@long_name = "Zonal Wind"
   u@units = "m/s"
-  v = transpose(f->VVEL(:,:,0,0))/100.d   ; Convert from cm/s -> m/s
+  v = transpose(f->VVEL(:,0:nlevs_in_plot-1,0,0))/100.d   ; Convert from cm/s -> m/s
+  v@long_name = "Meridonal Wind"
+  v@units = "m/s"
   kappa = transpose(f->VDC_T(:,:,0,0)/10000.d)   ; Convert from cm^2/s -> m^2/s
   nu    = transpose(f->VVC(:,:,0,0)/10000.d)     ; Convert from cm^2/s -> m^2/s
   delete(f)
@@ -62,6 +64,10 @@ begin
   u!1 = "t"
   u&t = time
   u&z = z_cntr
+  v!0 = "z"
+  v!1 = "t"
+  v&t = time
+  v&z = z_cntr
 
 
   ; Print some statistics to sreen
@@ -99,8 +105,8 @@ begin
   pres@tiMainString = "Boundary Layer Depth"
   pres@tiYAxisString = "depth (meters)"
   plot = gsn_csm_xy(wks, time, h, pres)
-;  draw(plot)
-;  frame(wks)
+  draw(plot)
+  frame(wks)
 
   ; Plot SST
   wks2 = gsn_open_wks(out_type, "SST"+suffix)
@@ -109,8 +115,8 @@ begin
   pres@tiMainString = "Sea Surface Temperature"
   pres@tiYAxisString = "temperature (deg C)"
   plot = gsn_csm_xy(wks2, time, sst, pres)
-;  draw(plot)
-;  frame(wks2)
+  draw(plot)
+  frame(wks2)
 
   ; Contour map for wind fields
   wks3 = gsn_open_wks(out_type, "UVEL"+suffix)
@@ -120,9 +126,18 @@ begin
   draw(plot)
   frame(wks3)
 
+  wks4 = gsn_open_wks(out_type, "VVEL"+suffix)
+  cres@cnMinLevelValF = -0.15
+  cres@cnMaxLevelValF = 0.1
+  plot = gsn_csm_contour(wks4, v,cres)
+  draw(plot)
+  frame(wks4)
+
   ; Close all plots
   delete(wks)
   delete(wks2)
+  delete(wks3)
+  delete(wks4)
 
 
 end
