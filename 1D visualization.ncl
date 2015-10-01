@@ -50,16 +50,20 @@ begin
   temp = f->TEMP(:,:,0,0)
   sst = temp(:,0)
   u = transpose(f->UVEL(:,0:nlevs_in_plot-1,0,0))/100.d   ; Convert from cm/s -> m/s
-  u@long_name = "Zonal Wind"
+  u@long_name = "Zonal Velocity"
   u@units = "m/s"
   v = transpose(f->VVEL(:,0:nlevs_in_plot-1,0,0))/100.d   ; Convert from cm/s -> m/s
-  v@long_name = "Meridonal Wind"
+  v@long_name = "Meridonal Velocity"
   v@units = "m/s"
-  kappa = transpose(f->VDC_T(:,:,0,0)/10000.d)   ; Convert from cm^2/s -> m^2/s
-  nu    = transpose(f->VVC(:,:,0,0)/10000.d)     ; Convert from cm^2/s -> m^2/s
+  Kt = transpose(f->VDC_T(:,0:nlevs_in_plot-1,0,0)/10000.d)   ; Convert from cm^2/s -> m^2/s
+  Kt@long_name = "Diffusivity Coefficient for Temperature"
+  Kt@units = "m^2/s"
+  Ku = transpose(f->VVC(:,0:nlevs_in_plot-1,0,0)/10000.d)     ; Convert from cm^2/s -> m^2/s
+  Ku@long_name = "Diffusivity Coefficient for Momentum"
+  Ku@units = "m^2/s"
   delete(f)
 
-  ; Set up u, v, kappa, and nu to plot correctly
+  ; Set up u, v, Kt, and Ku  to plot correctly
   u!0 = "z"
   u!1 = "t"
   u&t = time
@@ -68,13 +72,23 @@ begin
   v!1 = "t"
   v&t = time
   v&z = z_cntr
+  Kt!0 = "z"
+  Kt!1 = "t"
+  Kt&t = time
+  Kt&z = z_cntr
+  Ku!0 = "z"
+  Ku!1 = "t"
+  Ku&t = time
+  Ku&z = z_cntr
 
 
   ; Print some statistics to sreen
   print((/"Deepest boundary layer depth: "+min(h)/))
   print((/"SST varies between "+min(sst)+" and "+max(sst)/))
   print((/"u varies between "+min(u)+" and "+max(u)/))
-  print((/"Max diffusivity: "+max(kappa)/))
+  print((/"Max temp diffusivity: "+max(Kt)/))
+  print((/"Max momentum diffusivity: "+max(Ku)/))
+  print((/"Ratio of max diffusivities: "+max(Kt)/max(Ku)/))
 
   ; Plot settings that are the same for HBLT and SST plots
   pres = True
@@ -99,14 +113,14 @@ begin
   cres@cnLevelSelectionMode = "ManualLevels"
 
   ; Plot boundary layer depth
-  wks = gsn_open_wks(out_type, "OBL_Depth"+suffix)
+  wks1 = gsn_open_wks(out_type, "OBL_Depth"+suffix)
   pres@trYMinF = -max_depth
   pres@trYMaxF = 0.
   pres@tiMainString = "Boundary Layer Depth"
   pres@tiYAxisString = "depth (meters)"
-  plot = gsn_csm_xy(wks, time, h, pres)
+  plot = gsn_csm_xy(wks1, time, h, pres)
   draw(plot)
-  frame(wks)
+  frame(wks1)
 
   ; Plot SST
   wks2 = gsn_open_wks(out_type, "SST"+suffix)
@@ -118,7 +132,7 @@ begin
   draw(plot)
   frame(wks2)
 
-  ; Contour map for wind fields
+  ; Contour map for velocity fields
   wks3 = gsn_open_wks(out_type, "UVEL"+suffix)
   cres@cnMinLevelValF = -0.1
   cres@cnMaxLevelValF = 0.15
@@ -133,11 +147,28 @@ begin
   draw(plot)
   frame(wks4)
 
+  ; Contour map for diffusivity fields
+  wks5 = gsn_open_wks(out_type, "Kt"+suffix)
+  cres@cnMinLevelValF = 0.
+  cres@cnMaxLevelValF = max_diff
+  plot = gsn_csm_contour(wks5, Kt,cres)
+  draw(plot)
+  frame(wks5)
+
+  wks6 = gsn_open_wks(out_type, "Ku"+suffix)
+  cres@cnMinLevelValF = 0.
+  cres@cnMaxLevelValF = max_diff
+  plot = gsn_csm_contour(wks6, Ku,cres)
+  draw(plot)
+  frame(wks6)
+
   ; Close all plots
-  delete(wks)
+  delete(wks1)
   delete(wks2)
   delete(wks3)
   delete(wks4)
+  delete(wks5)
+  delete(wks6)
 
 
 end
